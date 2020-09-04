@@ -379,3 +379,17 @@ body {
 .fade-enter-to {
     /* opacity: 1; */
 }
+
+
+[v-cloak] > * {
+    display: none;
+}
+
+[v-cloak] > #loading { 
+    display: block;
+    padding: 1em;
+}
+
+#loading {
+    display: none;
+}

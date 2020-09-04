@@ -1,15 +1,13 @@
-console.log("It works!");
-
 var LOAD_NUM = 4;
+var watcher;
 
 new Vue({
     el: "#app",
     data: {
         total: 0,
         products: [
-            // { title: "product 1", id: 1, price: 9.99 },
-            // { title: "product 2", id: 2, price: 9.99 },
-            // { title: "product 3", id: 3, price: 9.99 }
+            // { title: "product 1", id: 1, price: 9.99 }
+            // Is now dynamic from search request!
         ],
         cart: [],
         search: "cat",
@@ -17,12 +15,16 @@ new Vue({
         loading: false,
         results: [],
     },
+
+    // Functions
     methods:  {
         addToCart: function(product){
 
             // Debug
-            console.log(product); // current object
-            console.log(this.total); // total from this element (app)
+            console.log('Current product object: ');
+            console.log(product);
+            console.log('Total price from element(#app): ');
+            console.log(this.total);
             
             // Real code
             this.total += product.price;
@@ -49,11 +51,14 @@ new Vue({
         },
 
         inc: function(item){
+            console.log('Current item: ');
+            console.log(item);
             item.qty++;
             this.total += item.price;
         },
 
         dec: function(item){
+            console.log('Current item: ');
             console.log(item);
             item.qty--;
             this.total -= item.price;
@@ -66,27 +71,59 @@ new Vue({
 
         onSubmit: function() {
             this.products = [];
+            this.results = [];
             this.loading = true;
-
             var path = "/search?q=".concat(this.search);    // search from this element (app)
             this.$http.get(path)
                 .then(function(response) {
+                        console.log('Response from search: ');    
                         console.log(response);
                         this.results = response.body;
-                        this.products = response.body.slice(0, LOAD_NUM); // fill product array with search results
+                        // this.products = response.body.slice(0, LOAD_NUM); // fill product array with search results
                         this.lastSearch = this.search;
+                        this.appendResults();
                         this.loading = false;
                 });
-        }
+        },
 
+        appendResults: function() {
+            console.log('Append results:');
+            console.log(this.products);
+            console.log(this.results);
+            if(this.products.length < this.results.length) {
+                var toAppend = this.results.slice(
+                    this.products.length, 
+                    LOAD_NUM + this.products.length
+                    );
+                    this.products = this.products.concat(toAppend);
+            }
+        }
     },
+    
+
+    // Filters
     filters: {
         currency: function(price) {
             return "$".concat(price.toFixed(2));
         }
     },
+
+
+    // Livecycle hooks
     created: function(){
         this.onSubmit ();
+    },
+    updated: function(){
+        var sensor = document.querySelector('#product-list-bottom');
+        watcher = scrollMonitor.create(sensor);
+        watcher.enterViewport(this.appendResults);
+    },
+    beforeUpdate: function(){
+        if(watcher) {
+            watcher.destroy();
+            watchter = null;
+        }
+        
     }
 
 });
